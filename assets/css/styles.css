@@ -17,11 +17,11 @@
     
     /* Border colors */
     --border: #fed7e2;
-    --input: #fed7e2;
+    --input: #fed7e2; /* INPUT FIELDS BORDERS */
     
     /* Primary colors */
     --primary: #ff7fbf;
-    --primary-foreground: #ffffff;
+    --primary-foreground: #ffffff; /* BUTTONS */
     
     /* Secondary colors */
     --secondary: #fff5f7;
