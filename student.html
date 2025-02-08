@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Details - Student E-Index</title>
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Font Awesome -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <!-- Inter Font -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Custom CSS -->
+    <link href="assets/css/styles.css" rel="stylesheet" />
+  </head>
+  <body>
+    <nav class="navbar">
+      <div class="container-xl">
+        <a class="navbar-brand" href="/"> Student E-Index </a>
+      </div>
+    </nav>
+
+    <div class="container-xl py-4">
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Student Information</h5>
+                <a href="/" class="btn btn-light">
+                  <i class="fas fa-arrow-left me-2"></i>Back to List
+                </a>
+              </div>
+            </div>
+            <div class="card-body">
+              <div id="studentInfo" class="student-info mb-4">
+                <!-- Student details will be loaded here -->
+              </div>
+
+              <div class="records-section">
+                <div
+                  class="d-flex justify-content-between align-items-center mb-4"
+                >
+                  <div class="d-flex align-items-center gap-3">
+                    <h6 class="mb-0">Academic Records</h6>
+                    <button class="btn btn-primary btn-sm" id="addRecordBtn">
+                      <i class="fas fa-plus me-2"></i>Add Record
+                    </button>
+                  </div>
+                  <select
+                    id="categoryFilter"
+                    class="form-select form-select-sm"
+                    style="width: auto"
+                  >
+                    <option value="all">All Categories</option>
+                    <option value="quizzes">Quizzes</option>
+                    <option value="exams">Exams</option>
+                    <option value="activities">Activities</option>
+                  </select>
+                </div>
+                <div id="studentRecords" class="table-responsive">
+                  <!-- Records will be loaded here -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container-xl">
+        <p class="mb-0">&copy; 2025 Jinky Borja Suson. All rights reserved.</p>
+      </div>
+    </footer>
+
+    <!-- Add/Edit Record Modal -->
+    <div class="modal fade" id="recordModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Add Record</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="recordForm" novalidate>
+              <div class="mb-4">
+                <label class="form-label">Category</label>
+                <select class="form-select" name="category" required>
+                  <option value="quizzes">Quizzes</option>
+                  <option value="exams">Exams</option>
+                  <option value="activities">Activities</option>
+                </select>
+                <div class="invalid-feedback">Please select a category</div>
+              </div>
+              <div class="mb-4">
+                <label class="form-label">Record Number</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  name="record_number"
+                  required
+                />
+                <div class="invalid-feedback">
+                  Please enter a valid record number
+                </div>
+              </div>
+              <div class="mb-4">
+                <label class="form-label">Total Items</label>
+                <input type="text" class="form-control" name="items" required />
+                <div class="invalid-feedback">
+                  Please enter a valid number of items
+                </div>
+              </div>
+              <div class="mb-4">
+                <label class="form-label">Score</label>
+                <input type="text" class="form-control" name="score" required />
+                <div class="invalid-feedback">Please enter a valid score</div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+              Cancel
+            </button>
+            <button type="button" class="btn btn-primary" id="saveRecordBtn">
+              Save Record
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div
+      id="toastContainer"
+      class="toast-container position-fixed bottom-0 end-0 p-3"
+    ></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script type="module" src="assets/js/student.js"></script>
+  </body>
+</html>
