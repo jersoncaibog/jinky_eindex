@@ -4,7 +4,7 @@ A modern student record management system with RFID integration, created with lo
 
 ## 💕 Dedication
 
-This project is a labor of love, dedicated to my wonderful wife, Jinky. As a student herself, she understands the importance of efficient academic record management. Her journey in education has inspired me to create this system as part of my academic requirements, combining my technical skills with a purpose that's close to my heart.
+This project is a labor of love, dedicated to my wonderful wife, Jinky. As a student herself, she understands the importance of efficient academic record management. 
 
 ## 🎯 What Does This Project Do?
 
