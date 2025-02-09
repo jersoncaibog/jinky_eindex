@@ -68,10 +68,10 @@ cd Desktop
 mkdir project-name
 
 # Clone the project
-git clone git clone https://github.com/yourusername/jinky-e-index.git
+git clone https://github.com/jersoncaibog/jinky_eindex.git
 
 # Go into the project folder
-cd jinky-e-index
+cd jinky-eindex
 ```
 
 ### Step 3: Set Up the Database
