@@ -53,7 +53,7 @@ Here's what makes this project work:
      - Use port 3307 (important!)
 
 3. Install Git
-   - Go to [git-scm.com](https://git-scm.com)
+   - Go to [git-scm.com/downloads/win](https://git-scm.com/downloads/win)
    - Download and install for your system
 
 ### Step 2: Get the Project Files
