@@ -1,4 +1,5 @@
 USE jinky_eindex;
+
 -- Insert sample students
 INSERT INTO students (id, name, rfid_tag, course, year, section) VALUES
 (1, 'John Doe', '1234567890', 'BSIT', 1, 'A'),
@@ -21,10 +22,6 @@ INSERT INTO students (id, name, rfid_tag, course, year, section) VALUES
 (18, 'Paul Young', '1234567887', 'BSCRIM', 2, 'C'),
 (19, 'Quincy King', '1234567888', 'BSIT', 3, 'D'),
 (20, 'Rachel Scott', '1234567889', 'BSED', 4, 'E');
-
-
--- Insert sample records with record numbers
-USE jinky_eindex;
 
 INSERT INTO records (student_id, category, record_number, items, score, date_time) VALUES
 -- Student 1
