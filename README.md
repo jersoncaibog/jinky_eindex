@@ -46,7 +46,7 @@ Here's what makes this project work:
 
 2. Install MariaDB
 
-   - Go to [mariadb.org/download](https://mariadb.org/download)
+   - Go to [mariadb.com/download](https://mariadb.com/downloads/)
    - Download the version for your system
    - During installation:
      - Remember the root password you set
