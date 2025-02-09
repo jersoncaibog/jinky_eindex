@@ -277,6 +277,10 @@ h1, h2, h3, h4, h5, h6 {
     overflow-y: auto;
 }
 
+.student-records-table {
+    max-height: calc(100vh - 650px);
+}
+
 .table {
     width: 100%;
     border-collapse: collapse;
