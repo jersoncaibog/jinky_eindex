@@ -58,11 +58,11 @@ Here's what makes this project work:
 
 ### Step 2: Get the Project Files
 
-Open Command Prompt (Windows) or Terminal (Mac/Linux) and type:
+Open Terminal in your IDE (eg VS Code or Cursor IDE) and type:
 
 ```bash
 # Clone the project
-git clone https://github.com/yourusername/jinky-e-index.git
+git clone git clone https://github.com/yourusername/jinky-e-index.git
 
 # Go into the project folder
 cd jinky-e-index
