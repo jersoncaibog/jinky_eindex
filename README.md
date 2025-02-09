@@ -4,7 +4,7 @@ A modern student record management system with RFID integration, created with lo
 
 ## 💕 Dedication
 
-This project is a labor of love, dedicated to my wonderful wife, Jinky. As a student herself, she understands the importance of efficient academic record management. Her journey in education has inspired me to create this system as part of my academic requirements, combining my technical skills with a purpose that's close to my heart.
+This project is a labor of love, dedicated to my wonderful wife, Jinky. As a student herself, she understands the importance of efficient academic record management. 
 
 ## 🎯 What Does This Project Do?
 
@@ -46,26 +46,32 @@ Here's what makes this project work:
 
 2. Install MariaDB
 
-   - Go to [mariadb.org/download](https://mariadb.org/download)
+   - Go to [mariadb.com/download](https://mariadb.com/downloads/)
    - Download the version for your system
    - During installation:
      - Remember the root password you set
      - Use port 3307 (important!)
 
 3. Install Git
-   - Go to [git-scm.com](https://git-scm.com)
+   - Go to [git-scm.com/downloads/win](https://git-scm.com/downloads/win)
    - Download and install for your system
 
 ### Step 2: Get the Project Files
 
-Open Command Prompt (Windows) or Terminal (Mac/Linux) and type:
+Open Terminal in your IDE (eg VS Code or Cursor IDE) and type:
 
 ```bash
+# Enter desktop directory
+cd Desktop
+
+# create new folder
+mkdir project-name
+
 # Clone the project
-git clone https://github.com/yourusername/jinky-e-index.git
+git clone https://github.com/jersoncaibog/jinky_eindex.git
 
 # Go into the project folder
-cd jinky-e-index
+cd jinky-eindex
 ```
 
 ### Step 3: Set Up the Database
