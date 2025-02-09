@@ -61,6 +61,12 @@ Here's what makes this project work:
 Open Terminal in your IDE (eg VS Code or Cursor IDE) and type:
 
 ```bash
+# Enter desktop directory
+cd Desktop
+
+# create new folder
+mkdir project-name
+
 # Clone the project
 git clone git clone https://github.com/yourusername/jinky-e-index.git
 
