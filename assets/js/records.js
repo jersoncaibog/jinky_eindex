@@ -1,4 +1,7 @@
-import { clearValidation, getFormData, resetForm, showToast } from './api.js';
+import { clearValidation, resetForm, showToast } from './api.js';
+
+// API URL
+const API_URL = 'http://localhost:3000/api';
 
 let currentRecordId = null;
 let currentStudentId = null;
@@ -6,176 +9,389 @@ let currentStudentId = null;
 // Initialize records functionality
 export function initializeRecords(studentId) {
     currentStudentId = studentId;
+    console.log('Initializing records for student:', studentId);
     
     // Add event listeners
     const addRecordBtn = document.getElementById('addRecordBtn');
     const saveRecordBtn = document.getElementById('saveRecordBtn');
     const categoryFilter = document.getElementById('categoryFilter');
+    const subjectSelect = document.getElementById('subjectSelect');
+    const recordTypeSelect = document.getElementById('recordTypeSelect');
+    const recordModal = document.getElementById('recordModal');
+    const closeRecordModalBtn = document.getElementById('closeRecordModalBtn');
+    const cancelRecordBtn = document.getElementById('cancelRecordBtn');
 
+    // Record type selection
+    recordTypeSelect?.addEventListener('change', (e) => {
+        const recordType = e.target.value;
+        console.log('Switching to:', recordType);
+        
+        // Switch table headers based on record type
+        const academicHeaders = document.getElementById('academicHeaders');
+        const attendanceHeaders = document.getElementById('attendanceHeaders');
+        
+        if (recordType === 'academic') {
+            academicHeaders.style.display = 'table-row';
+            attendanceHeaders.style.display = 'none';
+        } else {
+            academicHeaders.style.display = 'none';
+            attendanceHeaders.style.display = 'table-row';
+        }
+        
+        // Load the appropriate records
+        const subject = subjectSelect ? subjectSelect.value : null;
+        loadRecordsByType(recordType, currentStudentId, subject);
+    });
+
+    // Subject selection
+    subjectSelect?.addEventListener('change', (e) => {
+        const subject = e.target.value;
+        console.log('Filtering by subject:', subject);
+        
+        // Get the current record type
+        const recordTypeSelect = document.getElementById('recordTypeSelect');
+        const currentType = recordTypeSelect ? recordTypeSelect.value : 'academic';
+        
+        // Use the appropriate loading function based on record type
+        loadRecordsByType(currentType, currentStudentId, subject);
+    });
+
+    // Add Record button click
     addRecordBtn?.addEventListener('click', () => {
         resetForm('recordForm');
         currentRecordId = null;
-        document.querySelector('#recordModal .modal-title').textContent = 'Add New Record';
-        document.getElementById('saveRecordBtn').textContent = 'Save Record';
-        const modal = new bootstrap.Modal(document.getElementById('recordModal'));
-        modal.show();
+        const modalTitle = recordModal.querySelector('.modal-header h5');
+        const saveBtn = recordModal.querySelector('#saveRecordBtn');
+        if (modalTitle) modalTitle.textContent = 'Add New Record';
+        if (saveBtn) saveBtn.textContent = 'Save Record';
+        
+        // Set default values for date and time
+        const now = new Date();
+        const dateInput = document.querySelector('[name="date"]');
+        const timeInput = document.querySelector('[name="time"]');
+        
+        if (dateInput) {
+            const today = now.toISOString().split('T')[0];
+            dateInput.value = today;
+        }
+        
+        if (timeInput) {
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            timeInput.value = `${hours}:${minutes}`;
+        }
+        
+        recordModal.classList.add('active');
+    });
+
+    // Close modal buttons
+    closeRecordModalBtn?.addEventListener('click', () => closeModal(recordModal));
+    cancelRecordBtn?.addEventListener('click', () => closeModal(recordModal));
+
+    // Modal backdrop click
+    recordModal?.addEventListener('click', (e) => {
+        if (e.target === recordModal) {
+            closeModal(recordModal);
+        }
     });
 
     saveRecordBtn?.addEventListener('click', handleSaveRecord);
     categoryFilter?.addEventListener('change', (e) => filterRecords(e.target.value));
 
     // Load initial records
-    loadRecords();
-}
+    loadRecords(currentStudentId);
 
-// Load and display records
-async function loadRecords() {
-    try {
-        const response = await fetch(`http://localhost:3000/api/students/${currentStudentId}/records`);
-        const data = await response.json();
+    // Form switching functionality
+    const recordTypeForm = document.getElementById('recordTypeForm');
+    const academicRecordForm = document.getElementById('academicRecordForm');
+    const attendanceRecordForm = document.getElementById('attendanceRecordForm');
 
-        if (data.success) {
-            renderRecordsTable(data.records);
+    recordTypeForm.addEventListener('change', (e) => {
+        const recordType = e.target.value;
+        if (recordType === 'academic') {
+            academicRecordForm.style.display = 'block';
+            attendanceRecordForm.style.display = 'none';
         } else {
-            showToast('Failed to load records', 'error');
-        }
-    } catch (error) {
-        console.error('Error loading records:', error);
-        showToast('Error loading records', 'error');
-    }
-}
-
-function renderRecordsTable(records) {
-    const container = document.getElementById('studentRecords');
-    if (!container) return;
-
-    if (records.length === 0) {
-        container.innerHTML = '<p class="text-center text-muted my-4">No records found</p>';
-        return;
-    }
-
-    container.innerHTML = `
-        <table class="table mb-0">
-            <thead>
-                <tr>
-                    <th>Category</th>
-                    <th>Record #</th>
-                    <th>Items</th>
-                    <th>Score</th>
-                    <th>Date</th>
-                    <th class="text-end">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${records.map(record => `
-                    <tr data-category="${record.category}">
-                        <td class="text-capitalize">${record.category}</td>
-                        <td>${record.record_number}</td>
-                        <td>${record.items}</td>
-                        <td>${record.score}</td>
-                        <td>${new Date(record.date_time).toLocaleDateString()}</td>
-                        <td class="text-end">
-                            <div class="action-buttons">
-                                <button class="btn btn-sm btn-edit me-2" onclick="editRecord(${record.id})">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-sm btn-soft-delete" onclick="showDeleteRecordConfirmation(${record.id}, '${record.category} #${record.record_number}')">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
-    `;
-}
-
-// Filter records by category
-function filterRecords(category) {
-    const rows = document.querySelectorAll('#studentRecords tbody tr');
-    rows.forEach(row => {
-        if (category === 'all' || row.dataset.category === category) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
+            academicRecordForm.style.display = 'none';
+            attendanceRecordForm.style.display = 'block';
         }
     });
 }
 
-// Add/Edit record
-async function handleSaveRecord() {
-    const formData = getFormData('recordForm');
-    
-    if (!validateRecordForm(formData)) return;
+// Helper function to close modal
+function closeModal(modal) {
+    modal.classList.remove('active');
+    resetForm('recordForm');
+    currentRecordId = null;
+}
 
-    console.log(formData)
-
+// Load and display records
+export async function loadRecords(studentId, category = null, subject = null) {
     try {
-        const data = {
-            ...formData,
-            student_id: currentStudentId,
-            record_number: parseInt(formData.record_number),
-            items: parseInt(formData.items),
-            score: parseFloat(formData.score)
-        };
-
-        const url = `http://localhost:3000/api/students/${currentStudentId}/records${currentRecordId ? `/${currentRecordId}` : ''}`;
-        const method = currentRecordId ? 'PUT' : 'POST';
-
-        const response = await fetch(url, {
-            method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-
-        console.log(response)
-
-        const result = await response.json();
-
-        console.log(result)
-
-        if (result.success) {
-            const modal = bootstrap.Modal.getInstance(document.getElementById('recordModal'));
-            modal.hide();
-            await loadRecords();
-            showToast(currentRecordId ? 'Record updated successfully' : 'Record added successfully');
-            currentRecordId = null;
-        } else {
-            showToast(result.message, 'error');
+        let url = `${API_URL}/records/${studentId}/records`;
+        const params = new URLSearchParams();
+        
+        // Only add category if it's not null or 'all'
+        if (category && category !== 'all') {
+            params.append('category', category);
         }
+        
+        // Only add subject if it's not null or 'all'
+        if (subject && subject !== 'all') {
+            params.append('subject', subject);
+        }
+        
+        if (params.toString()) {
+            url += `?${params.toString()}`;
+        }
+        
+        console.log('Request URL:', url);
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
+        
+        console.log('Records response status:', response.status);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Received records data:', data);
+        
+        if (!data.success) {
+            throw new Error(data.message || 'Failed to load records');
+        }
+        
+        console.log('Rendering records table with data:', data.records);
+        renderRecordsTable(data.records);
     } catch (error) {
-        console.error('Error saving record:', error);
-        showToast('Error saving record', 'error');
+        console.error('Error loading records:', error);
+        showToast('Error loading records. Please check if the server is running.', 'error');
     }
 }
 
-function validateRecordForm(data) {
-    let isValid = true;
+function renderRecordsTable(records) {
+    const tbody = document.querySelector('#studentRecords tbody');
+    if (!records || records.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center">No records found</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = records
+        .map(
+            (record) => `
+                <tr>
+                    <td>${record.subject}</td>
+                    <td>${record.category}</td>
+                    <td>${record.record_number}</td>
+                    <td>${record.items}</td>
+                    <td>${record.score}</td>
+                    <td>
+                        <button class="btn btn-light btn-sm edit-record" data-id="${record.id}">
+                            Edit
+                        </button>
+                        <button class="btn btn-light btn-sm delete-record" data-id="${record.id}">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+            `
+        )
+        .join('');
+
+    // Add event listeners to edit buttons
+    tbody.querySelectorAll('.edit-record').forEach(button => {
+        button.addEventListener('click', () => {
+            const recordId = button.dataset.id;
+            editRecord(recordId);
+        });
+    });
+
+    // Add event listeners to delete buttons
+    tbody.querySelectorAll('.delete-record').forEach(button => {
+        button.addEventListener('click', () => {
+            const recordId = button.dataset.id;
+            showDeleteRecordConfirmation(recordId, `Record #${recordId}`);
+        });
+    });
+}
+
+// Filter records by category
+async function filterRecords(category) {
+    try {
+        console.log('Filtering records by category:', category);
+        
+        // Get the current record type and subject
+        const recordTypeSelect = document.getElementById('recordTypeSelect');
+        const subjectSelect = document.getElementById('subjectSelect');
+        const currentType = recordTypeSelect ? recordTypeSelect.value : 'academic';
+        const subject = subjectSelect ? subjectSelect.value : null;
+        
+        // If we're viewing academic records, filter by category
+        if (currentType === 'academic') {
+            await loadRecords(currentStudentId, category, subject);
+        } else {
+            // For attendance records, just reload with current filters
+            await loadRecordsByType(currentType, currentStudentId, subject);
+        }
+    } catch (error) {
+        console.error('Error filtering records:', error);
+        showToast('Error filtering records', 'error');
+    }
+}
+
+// Helper function to get student ID from URL
+function getStudentIdFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('id');
+}
+
+// Add/Edit record
+async function handleSaveRecord() {
     const form = document.getElementById('recordForm');
+    const formData = new FormData(form);
+    const recordType = formData.get('record_type');
+
+    // Validate form
+    if (!validateForm(form)) {
+        return;
+    }
+
+    try {
+        const studentId = getStudentIdFromUrl() || currentStudentId;
+        let response;
+
+        if (recordType === 'academic') {
+            // Handle academic record
+            const academicData = {
+                subject: formData.get('subject'),
+                category: formData.get('category'),
+                record_number: formData.get('record_number'),
+                items: formData.get('items'),
+                score: formData.get('score')
+                // Note: Don't send record_type to backend for academic records
+            };
+            
+            // Use imported functions from api.js
+            const { addAcademicRecord, updateAcademicRecord } = await import('./api.js');
+            
+            // Check if we're editing or adding
+            const recordId = form.dataset.recordId;
+            if (recordId) {
+                response = await updateAcademicRecord(recordId, academicData, studentId);
+            } else {
+                response = await addAcademicRecord(studentId, academicData);
+            }
+        } else {
+            // Handle attendance record
+            const attendanceData = {
+                subject: formData.get('attendance_subject'),
+                date: formData.get('date'),
+                time: formData.get('time'),
+                record_type: 'attendance' // Keep record_type for attendance records
+            };
+            
+            // Use imported functions from api.js
+            const { addAttendanceRecord, deleteAttendanceRecord } = await import('./api.js');
+            
+            // Check if we're editing or adding
+            const recordId = form.dataset.recordId;
+            if (recordId) {
+                // For attendance, we need to delete the old record and create a new one
+                // since there's no update endpoint
+                try {
+                    // First delete the old record
+                    const deleteResponse = await deleteAttendanceRecord(recordId, studentId);
+                    if (!deleteResponse.success) {
+                        throw new Error(deleteResponse.message || 'Failed to update attendance record');
+                    }
+                    
+                    // Then create a new one
+                    response = await addAttendanceRecord(studentId, attendanceData);
+                } catch (error) {
+                    console.error('Error updating attendance record:', error);
+                    showToast('Failed to update attendance record', 'error');
+                    return;
+                }
+            } else {
+                response = await addAttendanceRecord(studentId, attendanceData);
+            }
+        }
+
+        if (response && response.success) {
+            showToast('Record saved successfully', 'success');
+            closeModal(document.getElementById('recordModal'));
+            
+            // Refresh the records table with the correct type
+            const recordTypeSelect = document.getElementById('recordTypeSelect');
+            const currentType = recordTypeSelect ? recordTypeSelect.value : recordType;
+            loadRecordsByType(currentType, studentId);
+        } else {
+            showToast(response?.message || 'Failed to save record', 'error');
+        }
+    } catch (error) {
+        console.error('Error saving record:', error);
+        showToast('Failed to save record', 'error');
+    }
+}
+
+function validateForm(form) {
+    let isValid = true;
     clearValidation(form);
+    
+    const recordType = form.record_type.value;
+    
+    if (recordType === 'academic') {
+        // Validate academic record fields
+        if (!form.subject.value) {
+            setInvalid('subject', 'Please select a subject');
+            isValid = false;
+        }
+        
+        if (!form.category.value) {
+            setInvalid('category', 'Please select a category');
+            isValid = false;
+        }
 
-    if (!data.category) {
-        setInvalid('category', 'Please select a category');
-        isValid = false;
-    }
+        const recordNumber = parseInt(form.record_number.value);
+        if (isNaN(recordNumber) || recordNumber < 1) {
+            setInvalid('record_number', 'Please enter a valid record number');
+            isValid = false;
+        }
 
-    const recordNumber = parseInt(data.record_number);
-    if (isNaN(recordNumber) || recordNumber < 1) {
-        setInvalid('record_number', 'Please enter a valid record number');
-        isValid = false;
-    }
+        const items = parseInt(form.items.value);
+        if (isNaN(items) || items < 1) {
+            setInvalid('items', 'Please enter a valid number of items');
+            isValid = false;
+        }
 
-    const items = parseInt(data.items);
-    if (isNaN(items) || items < 1) {
-        setInvalid('items', 'Please enter a valid number of items');
-        isValid = false;
-    }
-
-    const score = parseFloat(data.score);
-    if (isNaN(score) || score < 0 || score > items) {
-        setInvalid('score', `Score must be between 0 and ${items}`);
-        isValid = false;
+        const score = parseFloat(form.score.value);
+        if (isNaN(score) || score < 0 || score > items) {
+            setInvalid('score', `Score must be between 0 and ${items}`);
+            isValid = false;
+        }
+    } else {
+        // Validate attendance record fields
+        if (!form.attendance_subject.value) {
+            setInvalid('attendance_subject', 'Please select a subject');
+            isValid = false;
+        }
+        
+        if (!form.date.value) {
+            setInvalid('date', 'Please select a date');
+            isValid = false;
+        }
+        
+        if (!form.time.value) {
+            setInvalid('time', 'Please select a time');
+            isValid = false;
+        }
     }
 
     return isValid;
@@ -188,84 +404,150 @@ function setInvalid(fieldName, message) {
 }
 
 // Edit record
-export async function editRecord(id) {
+async function editRecord(recordId) {
     try {
-        currentRecordId = id;
+        const studentId = getStudentIdFromUrl() || currentStudentId;
+        const recordType = recordTypeForm.value;
+        let record;
         
-        const response = await fetch(`http://localhost:3000/api/students/${currentStudentId}/records/${id}`);
-        const data = await response.json();
-        
-        if (!data.success) {
-            showToast('Failed to load record data', 'error');
-            return;
+        // Import API functions
+        const { getAcademicRecord, getAttendanceRecord } = await import('./api.js');
+
+        if (recordType === 'academic') {
+            record = await getAcademicRecord(recordId, studentId);
+        } else {
+            record = await getAttendanceRecord(recordId, studentId);
         }
 
-        const record = data.record;
-        const form = document.getElementById('recordForm');
-        
-        form.category.value = record.category;
-        form.record_number.value = record.record_number;
-        form.items.value = record.items;
-        form.score.value = record.score;
+        if (record) {
+            const form = document.getElementById('recordForm');
+            form.reset();
+            
+            // Set record type
+            recordTypeForm.value = recordType;
+            
+            if (recordType === 'academic') {
+                // Show academic form and populate fields
+                academicRecordForm.style.display = 'block';
+                attendanceRecordForm.style.display = 'none';
+                
+                form.querySelector('[name="subject"]').value = record.subject;
+                form.querySelector('[name="category"]').value = record.category;
+                form.querySelector('[name="record_number"]').value = record.record_number;
+                form.querySelector('[name="items"]').value = record.items;
+                form.querySelector('[name="score"]').value = record.score;
+            } else {
+                // Show attendance form and populate fields
+                academicRecordForm.style.display = 'none';
+                attendanceRecordForm.style.display = 'block';
+                
+                form.querySelector('[name="attendance_subject"]').value = record.subject;
+                form.querySelector('[name="date"]').value = record.date;
+                form.querySelector('[name="time"]').value = record.time;
+            }
 
-        document.querySelector('#recordModal .modal-title').textContent = 'Edit Record';
-        document.getElementById('saveRecordBtn').textContent = 'Update Record';
-
-        const modal = new bootstrap.Modal(document.getElementById('recordModal'));
-        modal.show();
+            // Update modal title and save button
+            document.querySelector('#recordModal h5').textContent = 'Edit Record';
+            document.getElementById('saveRecordBtn').textContent = 'Update Record';
+            
+            // Store record ID for update
+            form.dataset.recordId = recordId;
+            
+            // Show modal
+            document.getElementById('recordModal').classList.add('active');
+        }
     } catch (error) {
-        console.error('Error loading record data:', error);
-        showToast('Error loading record data', 'error');
+        console.error('Error loading record:', error);
+        showToast('Failed to load record', 'error');
     }
 }
 
 // Delete record
-export function showDeleteRecordConfirmation(id, recordName) {
-    const confirmationHtml = `
-        <div class="modal fade" id="deleteRecordModal" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Delete Record</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p>Are you sure you want to delete <strong>${recordName}</strong>?</p>
-                        <p class="text-danger mb-0">This action cannot be undone.</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-danger" onclick="confirmDeleteRecord(${id})">Delete Record</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
+export function showDeleteRecordConfirmation(id, recordName, recordType = 'academic') {
+    const deleteModal = document.getElementById('deleteRecordModal');
+    const modalBody = deleteModal.querySelector('.modal-body p');
+    
+    // Update modal content
+    modalBody.innerHTML = `Are you sure you want to delete <strong>${recordName}</strong>?`;
+    
+    // Store record type for deletion
+    deleteModal.dataset.recordType = recordType;
+    deleteModal.dataset.recordId = id;
+    
+    // Show modal
+    deleteModal.classList.add('active');
 
-    const existingModal = document.getElementById('deleteRecordModal');
-    if (existingModal) {
-        existingModal.remove();
-    }
+    // Get modal buttons
+    const closeDeleteModalBtn = document.getElementById('closeDeleteModalBtn');
+    const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
 
-    document.body.insertAdjacentHTML('beforeend', confirmationHtml);
-    const modal = new bootstrap.Modal(document.getElementById('deleteRecordModal'));
-    modal.show();
+    // Remove any existing event listeners by cloning and replacing elements
+    const newCloseBtn = closeDeleteModalBtn.cloneNode(true);
+    const newCancelBtn = cancelDeleteBtn.cloneNode(true);
+    const newConfirmBtn = confirmDeleteBtn.cloneNode(true);
+    
+    closeDeleteModalBtn.parentNode.replaceChild(newCloseBtn, closeDeleteModalBtn);
+    cancelDeleteBtn.parentNode.replaceChild(newCancelBtn, cancelDeleteBtn);
+    confirmDeleteBtn.parentNode.replaceChild(newConfirmBtn, confirmDeleteBtn);
+
+    // Add event listeners to the new buttons
+    newCloseBtn.addEventListener('click', closeDeleteModal);
+    newCancelBtn.addEventListener('click', closeDeleteModal);
+    newConfirmBtn.addEventListener('click', confirmDeleteRecord);
+
+    // Close on backdrop click - using once: true to ensure it only fires once
+    const backdropHandler = (e) => {
+        if (e.target === deleteModal) {
+            closeDeleteModal();
+            deleteModal.removeEventListener('click', backdropHandler);
+        }
+    };
+    
+    // Remove existing listeners (if any) by cloning the modal
+    deleteModal.removeEventListener('click', backdropHandler);
+    deleteModal.addEventListener('click', backdropHandler);
 }
 
-export async function confirmDeleteRecord(id) {
-    try {
-        const response = await fetch(`http://localhost:3000/api/students/${currentStudentId}/records/${id}`, {
-            method: 'DELETE'
-        });
-        const result = await response.json();
+function closeDeleteModal() {
+    const deleteModal = document.getElementById('deleteRecordModal');
+    if (deleteModal) {
+        deleteModal.classList.remove('active');
+    }
+}
 
-        if (result.success) {
-            const modal = bootstrap.Modal.getInstance(document.getElementById('deleteRecordModal'));
-            modal.hide();
-            await loadRecords();
-            showToast('Record deleted successfully');
+export async function confirmDeleteRecord() {
+    try {
+        const deleteModal = document.getElementById('deleteRecordModal');
+        const recordId = deleteModal.dataset.recordId;
+        const recordType = deleteModal.dataset.recordType;
+        const studentId = getStudentIdFromUrl() || currentStudentId;
+        
+        let response;
+        
+        if (recordType === 'academic') {
+            // Import the deleteAcademicRecord function
+            const { deleteAcademicRecord } = await import('./api.js');
+            response = await deleteAcademicRecord(recordId, studentId);
         } else {
-            showToast(result.message, 'error');
+            // Import the deleteAttendanceRecord function
+            const { deleteAttendanceRecord } = await import('./api.js');
+            response = await deleteAttendanceRecord(recordId, studentId);
+        }
+        
+        if (response.success) {
+            closeDeleteModal();
+            
+            // Refresh the records table
+            const recordTypeSelect = document.getElementById('recordTypeSelect');
+            const subjectSelect = document.getElementById('subjectSelect');
+            const currentType = recordTypeSelect ? recordTypeSelect.value : 'academic';
+            const subject = subjectSelect ? subjectSelect.value : null;
+            
+            await loadRecordsByType(currentType, studentId, subject);
+            showToast('Record deleted successfully', 'success');
+        } else {
+            showToast(response.message || 'Failed to delete record', 'error');
         }
     } catch (error) {
         console.error('Error deleting record:', error);
@@ -277,3 +559,183 @@ export async function confirmDeleteRecord(id) {
 window.editRecord = editRecord;
 window.showDeleteRecordConfirmation = showDeleteRecordConfirmation;
 window.confirmDeleteRecord = confirmDeleteRecord;
+
+// Load records based on type (academic or attendance)
+async function loadRecordsByType(recordType, studentId, subject = null) {
+    try {
+        // Set the base URL based on the record type
+        let url;
+        
+        if (recordType === 'academic') {
+            // For academic records, use the existing endpoint
+            url = `${API_URL}/records/${studentId}/records`;
+            
+            // Add subject as query parameter
+            if (subject && subject !== 'all') {
+                url += `?subject=${subject}`;
+            }
+        } else {
+            // For attendance records, use the correct endpoint
+            url = `${API_URL}/attendance/students/${studentId}`;
+            
+            // Add subject as query parameter
+            // Note: The backend expects subjectId, not subject
+            if (subject && subject !== 'all') {
+                // Get the subject ID from the subject code
+                const subjectId = getSubjectIdFromCode(subject);
+                url += `?subjectId=${subjectId}`;
+            }
+        }
+        
+        console.log('Loading records from:', url);
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Received records data:', data);
+        
+        if (!data.success) {
+            throw new Error(data.message || 'Failed to load records');
+        }
+        
+        if (recordType === 'academic') {
+            renderAcademicRecordsTable(data.records);
+        } else {
+            renderAttendanceRecordsTable(data.attendance);
+        }
+    } catch (error) {
+        console.error(`Error loading ${recordType} records:`, error);
+        showToast(`Error loading ${recordType} records.`, 'error');
+    }
+}
+
+// Helper function to get subject ID from subject code
+// For now, we'll use a simple mapping based on the schema
+function getSubjectIdFromCode(subjectCode) {
+    // Based on the sample data, IT223 is ID 1 and IT221 is ID 2
+    if (subjectCode === 'IT223') return 1;
+    if (subjectCode === 'IT221') return 2;
+    return null;
+}
+
+// Render academic records table
+function renderAcademicRecordsTable(records) {
+    const tbody = document.querySelector('#studentRecords tbody');
+    if (!records || records.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center">No academic records found</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = records
+        .map(
+            (record) => `
+                <tr>
+                    <td>${record.subject}</td>
+                    <td>${record.category}</td>
+                    <td>${record.record_number}</td>
+                    <td>${record.items}</td>
+                    <td>${record.score}</td>
+                    <td>
+                        <button class="btn btn-light btn-sm edit-record" data-id="${record.id}" data-type="academic">
+                            Edit
+                        </button>
+                        <button class="btn btn-light btn-sm delete-record" data-id="${record.id}" data-type="academic">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+            `
+        )
+        .join('');
+
+    // Add event listeners to buttons
+    addTableButtonListeners();
+}
+
+// Render attendance records table
+function renderAttendanceRecordsTable(records) {
+    const tbody = document.querySelector('#studentRecords tbody');
+    if (!records || records.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center">No attendance records found</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = records
+        .map(
+            (record) => {
+                // Format date and time from date_time
+                const dateTime = new Date(record.date_time);
+                const date = dateTime.toLocaleDateString();
+                const time = dateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                
+                return `
+                <tr>
+                    <td>${record.subject_code || record.subject}</td>
+                    <td>${date}</td>
+                    <td>${time}</td>
+                    <td>
+                        <button class="btn btn-light btn-sm edit-record" data-id="${record.id}" data-type="attendance">
+                            Edit
+                        </button>
+                        <button class="btn btn-light btn-sm delete-record" data-id="${record.id}" data-type="attendance">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+            `;
+            }
+        )
+        .join('');
+
+    // Add event listeners to buttons
+    addTableButtonListeners();
+}
+
+// Add event listeners to table buttons
+function addTableButtonListeners() {
+    // Use event delegation for table buttons
+    const tbody = document.querySelector('#studentRecords tbody');
+    
+    // Remove any existing listeners first
+    const newTbody = tbody.cloneNode(true);
+    tbody.parentNode.replaceChild(newTbody, tbody);
+    
+    // Add a single event listener to the table body
+    newTbody.addEventListener('click', (e) => {
+        // Handle edit button clicks
+        if (e.target.classList.contains('edit-record')) {
+            const button = e.target;
+            const recordId = button.dataset.id;
+            const recordType = button.dataset.type;
+            
+            // Set the form type first, then edit the record
+            if (recordTypeForm) {
+                recordTypeForm.value = recordType;
+                // Trigger the change event to update form visibility
+                recordTypeForm.dispatchEvent(new Event('change'));
+            }
+            editRecord(recordId);
+        }
+        
+        // Handle delete button clicks
+        if (e.target.classList.contains('delete-record')) {
+            const button = e.target;
+            const recordId = button.dataset.id;
+            const recordType = button.dataset.type;
+            const recordName = recordType === 'academic' ? 
+                `Academic Record #${recordId}` : 
+                `Attendance Record #${recordId}`;
+            showDeleteRecordConfirmation(recordId, recordName, recordType);
+        }
+    });
+}

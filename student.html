@@ -4,72 +4,73 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Student Details - Student E-Index</title>
-    <!-- Bootstrap CSS -->
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <!-- Font Awesome -->
-    <link
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-      rel="stylesheet"
-    />
-    <!-- Inter Font -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
+
     <!-- Custom CSS -->
     <link href="assets/css/styles.css" rel="stylesheet" />
   </head>
   <body>
-    <nav class="navbar">
-      <div class="container-xl">
-        <a class="navbar-brand" href="/"> Student E-Index </a>
-      </div>
-    </nav>
-
-    <div class="container-xl py-4">
-      <div class="row">
-        <div class="col-12">
-          <div class="card">
-            <div class="card-header">
-              <div class="d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Student Information</h5>
-                <a href="/" class="btn btn-light">
-                  <i class="fas fa-arrow-left me-2"></i>Back to List
-                </a>
-              </div>
+    <!-- Main Content -->
+    <div class="container">
+      <div class="content">
+        <div class="card">
+          <div class="card-header">
+            <div class="header-content">
+              <h5>Student Information</h5>
+              <a href="/" class="btn btn-light"> Back to List </a>
             </div>
-            <div class="card-body">
-              <div id="studentInfo" class="student-info mb-4">
-                <!-- Student details will be loaded here -->
-              </div>
+          </div>
+          <div class="card-body">
+            <!-- Student Info Section -->
+            <div id="studentInfo" class="student-details">
+              <!-- Student details will be loaded dynamically -->
+            </div>
 
-              <div class="records-section">
-                <div
-                  class="d-flex justify-content-between align-items-center mb-4"
-                >
-                  <div class="d-flex align-items-center gap-3">
-                    <h6 class="mb-0">Academic Records</h6>
-                    <button class="btn btn-primary btn-sm" id="addRecordBtn">
-                      <i class="fas fa-plus me-2"></i>Add Record
-                    </button>
-                  </div>
-                  <select
-                    id="categoryFilter"
-                    class="form-select form-select-sm"
-                    style="width: auto"
-                  >
+            <!-- Records Section -->
+            <div class="records-section">
+              <div class="records-header">
+                <div class="header-left">
+                  <select id="recordTypeSelect" class="form-select">
+                    <option value="academic">Academic Records</option>
+                    <option value="attendance">Attendance Records</option>
+                  </select>
+                  <select id="subjectSelect" class="form-select">
+                    <option value="all">All Subjects</option>
+                    <option value="IT223">IT223</option>
+                    <option value="IT221">IT221</option>
+                  </select>
+                  <select id="categoryFilter" class="form-select">
                     <option value="all">All Categories</option>
                     <option value="quizzes">Quizzes</option>
                     <option value="exams">Exams</option>
                     <option value="activities">Activities</option>
                   </select>
                 </div>
-                <div id="studentRecords" class="table-responsive student-records-table">
-                  <!-- Records will be loaded here -->
-                </div>
+                <button class="btn btn-primary" id="addRecordBtn">
+                  Add Record
+                </button>
+              </div>
+              <div class="table-container">
+                <table id="studentRecords" class="table">
+                  <thead>
+                    <tr id="academicHeaders">
+                      <th>Subject</th>
+                      <th>Category</th>
+                      <th>Record #</th>
+                      <th>Items</th>
+                      <th>Score</th>
+                      <th>Actions</th>
+                    </tr>
+                    <tr id="attendanceHeaders" style="display: none">
+                      <th>Subject</th>
+                      <th>Date</th>
+                      <th>Time</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Records will be loaded dynamically -->
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -77,82 +78,140 @@
       </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="footer">
-      <div class="container-xl">
-        <p class="mb-0">&copy; 2025 Jinky Borja Suson. All rights reserved.</p>
-      </div>
-    </footer>
-
     <!-- Add/Edit Record Modal -->
-    <div class="modal fade" id="recordModal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Add Record</h5>
-            <button
-              type="button"
-              class="btn-close"
-              data-bs-dismiss="modal"
-            ></button>
-          </div>
-          <div class="modal-body">
-            <form id="recordForm" novalidate>
-              <div class="mb-4">
-                <label class="form-label">Category</label>
+    <div class="modal" id="recordModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5>Add Record</h5>
+          <button
+            type="button"
+            class="close-btn"
+            id="closeRecordModalBtn"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <form id="recordForm" novalidate>
+            <div class="form-group">
+              <label>Record Type</label>
+              <select
+                class="form-select"
+                name="record_type"
+                id="recordTypeForm"
+                required
+              >
+                <option value="academic">Academic Record</option>
+                <option value="attendance">Attendance Record</option>
+              </select>
+              <div class="error-message">Please select a record type</div>
+            </div>
+
+            <!-- Academic Record Form -->
+            <div id="academicRecordForm">
+              <div class="form-group">
+                <label>Subject</label>
+                <select class="form-select" name="subject" required>
+                  <option value="IT223">IT223</option>
+                  <option value="IT221">IT221</option>
+                </select>
+                <div class="error-message">Please select a subject</div>
+              </div>
+              <div class="form-group">
+                <label>Category</label>
                 <select class="form-select" name="category" required>
                   <option value="quizzes">Quizzes</option>
                   <option value="exams">Exams</option>
                   <option value="activities">Activities</option>
                 </select>
-                <div class="invalid-feedback">Please select a category</div>
+                <div class="error-message">Please select a category</div>
               </div>
-              <div class="mb-4">
-                <label class="form-label">Record Number</label>
+              <div class="form-group">
+                <label>Record Number</label>
                 <input
                   type="text"
                   class="form-control"
                   name="record_number"
                   required
                 />
-                <div class="invalid-feedback">
+                <div class="error-message">
                   Please enter a valid record number
                 </div>
               </div>
-              <div class="mb-4">
-                <label class="form-label">Total Items</label>
+              <div class="form-group">
+                <label>Total Items</label>
                 <input type="text" class="form-control" name="items" required />
-                <div class="invalid-feedback">
+                <div class="error-message">
                   Please enter a valid number of items
                 </div>
               </div>
-              <div class="mb-4">
-                <label class="form-label">Score</label>
+              <div class="form-group">
+                <label>Score</label>
                 <input type="text" class="form-control" name="score" required />
-                <div class="invalid-feedback">Please enter a valid score</div>
+                <div class="error-message">Please enter a valid score</div>
               </div>
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-light" data-bs-dismiss="modal">
-              Cancel
-            </button>
-            <button type="button" class="btn btn-primary" id="saveRecordBtn">
-              Save Record
-            </button>
-          </div>
+            </div>
+
+            <!-- Attendance Record Form -->
+            <div id="attendanceRecordForm" style="display: none">
+              <div class="form-group">
+                <label>Subject</label>
+                <select class="form-select" name="attendance_subject" required>
+                  <option value="IT223">IT223</option>
+                  <option value="IT221">IT221</option>
+                </select>
+                <div class="error-message">Please select a subject</div>
+              </div>
+              <div class="form-group">
+                <label>Date</label>
+                <input type="date" class="form-control" name="date" required />
+                <div class="error-message">Please select a date</div>
+              </div>
+              <div class="form-group">
+                <label>Time</label>
+                <input type="time" class="form-control" name="time" required />
+                <div class="error-message">Please select a time</div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" id="cancelRecordBtn">
+            Cancel
+          </button>
+          <button type="button" class="btn btn-primary" id="saveRecordBtn">
+            Save Record
+          </button>
         </div>
       </div>
     </div>
 
     <!-- Toast Container -->
-    <div
-      id="toastContainer"
-      class="toast-container position-fixed bottom-0 end-0 p-3"
-    ></div>
+    <div id="toastContainer" class="toast-container"></div>
 
-    <!-- Bootstrap Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" id="deleteRecordModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5>Delete Record</h5>
+          <button
+            type="button"
+            class="close-btn"
+            id="closeDeleteModalBtn"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to delete this record?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" id="cancelDeleteBtn">
+            Cancel
+          </button>
+          <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Custom JS -->
     <script type="module" src="assets/js/student.js"></script>
   </body>

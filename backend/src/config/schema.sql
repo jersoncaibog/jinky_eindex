@@ -20,7 +20,23 @@ CREATE TABLE IF NOT EXISTS records (
     record_number INT NOT NULL,
     items INT NOT NULL,
     score FLOAT NOT NULL,
+    subject ENUM('IT223', 'IT221') NOT NULL,
     date_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
-    UNIQUE KEY category_number (student_id, category, record_number)
+    UNIQUE KEY category_number (student_id, category, record_number, subject)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+-- Create subjects table
+CREATE TABLE IF NOT EXISTS subjects (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(10) NOT NULL,
+    teacher VARCHAR(100) NOT NULL
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+-- Create attendance table
+CREATE TABLE IF NOT EXISTS attendance (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    student_id INT NOT NULL,
+    subject_id INT NOT NULL,
+    date_time DATETIME NOT NULL,
+    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+    FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;

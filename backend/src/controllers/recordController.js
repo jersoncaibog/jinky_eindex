@@ -2,7 +2,18 @@ const Record = require('../models/record');
 
 exports.getStudentRecords = async (req, res) => {
     try {
-        const records = await Record.getByStudentId(req.params.studentId);
+        // Extract query parameters for filtering
+        const filters = {
+            subject: req.query.subject,
+            type: req.query.type,
+            category: req.query.category
+        };
+        
+        console.log('Received filter request:', filters);
+        
+        // Pass filters to the model
+        const records = await Record.getByStudentId(req.params.studentId, filters);
+        
         res.json({ success: true, records });
     } catch (error) {
         console.error('Error in getStudentRecords:', error);
@@ -26,62 +37,110 @@ exports.getRecord = async (req, res) => {
 
 exports.createRecord = async (req, res) => {
     try {
-        const { category, record_number, items, score } = req.body;
         const studentId = req.params.studentId;
+        const recordType = req.body.record_type || 'academic';
         
-        // Basic validation
-        if (!category || !record_number || !items || score === undefined) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'All fields are required' 
+        // Handle academic records
+        if (recordType === 'academic') {
+            const { subject, category, record_number, items, score } = req.body;
+            
+            // Basic validation
+            if (!subject || !category || !record_number || !items || score === undefined) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'All fields are required for academic records' 
+                });
+            }
+
+            // Type validation
+            const recordNum = parseInt(record_number);
+            const itemsNum = parseInt(items);
+            const scoreNum = parseFloat(score);
+
+            if (isNaN(recordNum) || recordNum < 1) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Record number must be a positive integer'
+                });
+            }
+
+            if (isNaN(itemsNum) || itemsNum < 1) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Items must be a positive integer'
+                });
+            }
+
+            if (isNaN(scoreNum) || scoreNum < 0 || scoreNum > itemsNum) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Score must be between 0 and ${itemsNum}`
+                });
+            }
+
+            const insertId = await Record.create({
+                student_id: studentId,
+                subject,
+                category,
+                record_number: recordNum,
+                items: itemsNum,
+                score: scoreNum,
+                record_type: recordType
+            });
+
+            res.status(201).json({ 
+                success: true, 
+                message: 'Academic record created successfully',
+                recordId: insertId
+            });
+        } 
+        // Handle attendance records
+        else if (recordType === 'attendance') {
+            const { subject, date, time } = req.body;
+            
+            // Basic validation
+            if (!subject || !date || !time) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'Subject, date, and time are required for attendance records' 
+                });
+            }
+            
+            // Combine date and time into a datetime object
+            const dateTime = new Date(`${date}T${time}`);
+            if (isNaN(dateTime.getTime())) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid date or time format'
+                });
+            }
+            
+            const insertId = await Record.createAttendance({
+                student_id: studentId,
+                subject,
+                date,
+                time,
+                record_type: recordType
+            });
+            
+            res.status(201).json({
+                success: true,
+                message: 'Attendance record created successfully',
+                recordId: insertId
             });
         }
-
-        // Type validation
-        const recordNum = parseInt(record_number);
-        const itemsNum = parseInt(items);
-        const scoreNum = parseFloat(score);
-
-        if (isNaN(recordNum) || recordNum < 1) {
+        else {
             return res.status(400).json({
                 success: false,
-                message: 'Record number must be a positive integer'
+                message: 'Invalid record type'
             });
         }
-
-        if (isNaN(itemsNum) || itemsNum < 1) {
-            return res.status(400).json({
-                success: false,
-                message: 'Items must be a positive integer'
-            });
-        }
-
-        if (isNaN(scoreNum) || scoreNum < 0 || scoreNum > itemsNum) {
-            return res.status(400).json({
-                success: false,
-                message: `Score must be between 0 and ${itemsNum}`
-            });
-        }
-
-        const insertId = await Record.create({
-            student_id: studentId,
-            category,
-            record_number: recordNum,
-            items: itemsNum,
-            score: scoreNum
-        });
-
-        res.status(201).json({ 
-            success: true, 
-            message: 'Record created successfully',
-            recordId: insertId
-        });
     } catch (error) {
         console.error('Error in createRecord:', error);
         if (error.code === 'ER_DUP_ENTRY') {
             res.status(400).json({ 
                 success: false, 
-                message: 'Record number already exists for this category' 
+                message: 'Record already exists' 
             });
         } else {
             res.status(500).json({ 
@@ -94,51 +153,95 @@ exports.createRecord = async (req, res) => {
 
 exports.updateRecord = async (req, res) => {
     try {
-        const { category, record_number, items, score } = req.body;
         const recordId = req.params.id;
         const studentId = req.params.studentId;
+        const recordType = req.body.record_type || 'academic';
+        
+        let success = false;
+        
+        // Handle academic records
+        if (recordType === 'academic') {
+            const { subject, category, record_number, items, score } = req.body;
 
-        // Basic validation
-        if (!category || !record_number || !items || score === undefined) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'All fields are required' 
+            // Basic validation
+            if (!subject || !category || !record_number || !items || score === undefined) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'All fields are required for academic records' 
+                });
+            }
+
+            // Type validation
+            const recordNum = parseInt(record_number);
+            const itemsNum = parseInt(items);
+            const scoreNum = parseFloat(score);
+
+            if (isNaN(recordNum) || recordNum < 1) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Record number must be a positive integer'
+                });
+            }
+
+            if (isNaN(itemsNum) || itemsNum < 1) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Items must be a positive integer'
+                });
+            }
+
+            if (isNaN(scoreNum) || scoreNum < 0 || scoreNum > itemsNum) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Score must be between 0 and ${itemsNum}`
+                });
+            }
+
+            success = await Record.update(recordId, {
+                student_id: studentId,
+                subject,
+                category,
+                record_number: recordNum,
+                items: itemsNum,
+                score: scoreNum,
+                record_type: recordType
+            });
+        } 
+        // Handle attendance records
+        else if (recordType === 'attendance') {
+            const { subject, date, time } = req.body;
+            
+            // Basic validation
+            if (!subject || !date || !time) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'Subject, date, and time are required for attendance records' 
+                });
+            }
+            
+            // Validate date and time format
+            const dateTime = new Date(`${date}T${time}`);
+            if (isNaN(dateTime.getTime())) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid date or time format'
+                });
+            }
+            
+            success = await Record.update(recordId, {
+                student_id: studentId,
+                subject,
+                date,
+                time,
+                record_type: recordType
             });
         }
-
-        // Type validation
-        const recordNum = parseInt(record_number);
-        const itemsNum = parseInt(items);
-        const scoreNum = parseFloat(score);
-
-        if (isNaN(recordNum) || recordNum < 1) {
+        else {
             return res.status(400).json({
                 success: false,
-                message: 'Record number must be a positive integer'
+                message: 'Invalid record type'
             });
         }
-
-        if (isNaN(itemsNum) || itemsNum < 1) {
-            return res.status(400).json({
-                success: false,
-                message: 'Items must be a positive integer'
-            });
-        }
-
-        if (isNaN(scoreNum) || scoreNum < 0 || scoreNum > itemsNum) {
-            return res.status(400).json({
-                success: false,
-                message: `Score must be between 0 and ${itemsNum}`
-            });
-        }
-
-        const success = await Record.update(recordId, {
-            student_id: studentId,
-            category,
-            record_number: recordNum,
-            items: itemsNum,
-            score: scoreNum
-        });
 
         if (success) {
             res.json({ 
@@ -156,12 +259,12 @@ exports.updateRecord = async (req, res) => {
         if (error.code === 'ER_DUP_ENTRY') {
             res.status(400).json({ 
                 success: false, 
-                message: 'Record number already exists for this category' 
+                message: 'Record already exists' 
             });
         } else {
             res.status(500).json({ 
                 success: false, 
-                message: 'Server error' 
+                message: error.message || 'Server error' 
             });
         }
     }

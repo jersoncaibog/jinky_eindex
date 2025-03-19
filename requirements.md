@@ -68,7 +68,6 @@ This project involves developing a web application that uses RFID technology to 
 
 - **HTML**: Markup for structuring the web app.
 - **CSS**: Styling for the user interface.
-- **Bootstrap**: For responsive design and pre-styled components.
 - **JavaScript**: For interactivity and dynamic content.
 
 ### Backend

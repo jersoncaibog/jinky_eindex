@@ -94,14 +94,26 @@ class Student {
         }
     }
 
-    static async getRecords(studentId) {
+    static async getRecords(studentId, category = null, subject = null) {
         let conn;
         try {
             conn = await pool.getConnection();
-            const rows = await conn.query(
-                'SELECT * FROM records WHERE student_id = ? ORDER BY date_time DESC',
-                [studentId]
-            );
+            let query = 'SELECT * FROM records WHERE student_id = ?';
+            let params = [studentId];
+
+            if (category && category !== 'all') {
+                query += ' AND category = ?';
+                params.push(category);
+            }
+
+            if (subject && subject !== 'all') {
+                query += ' AND subject = ?';
+                params.push(subject);
+            }
+
+            query += ' ORDER BY date_time DESC';
+            
+            const rows = await conn.query(query, params);
             return rows;
         } catch (error) {
             throw error;

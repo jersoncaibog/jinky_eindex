@@ -66,37 +66,37 @@ function filterStudents() {
 
 function renderStudentsTable(students) {
     const tbody = document.querySelector('#studentsTable tbody');
-    if (!tbody) return;
+    tbody.innerHTML = '';
 
-    tbody.innerHTML = students.map(student => `
-        <tr>
+    if (students.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center">No students found</td>
+            </tr>
+        `;
+        return;
+    }
+
+    students.forEach(student => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
             <td>${student.name}</td>
             <td>${student.course}</td>
             <td>${student.year}</td>
             <td>${student.section}</td>
-            <td class="text-end">
+            <td>
                 <div class="action-buttons">
-                    <button class="btn btn-sm btn-edit me-2" onclick="editStudent(${student.id})">
-                        <i class="fas fa-edit"></i>
+                    <button class="btn btn-sm btn-light" onclick="editStudent(${student.id})">
+                        Edit
                     </button>
-                    <button class="btn btn-sm btn-soft-delete" onclick="showDeleteConfirmation(${student.id}, '${student.name}')">
-                        <i class="fas fa-trash"></i>
+                    <button class="btn btn-sm btn-light" onclick="showDeleteConfirmation(${student.id}, '${student.name}')">
+                        Delete
                     </button>
                 </div>
             </td>
-        </tr>
-    `).join('');
-
-    // Show message if no results
-    if (students.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="5" class="text-center text-muted py-4">
-                    No students found
-                </td>
-            </tr>
         `;
-    }
+        tbody.appendChild(tr);
+    });
 }
 
 // Add/Edit student
@@ -120,8 +120,8 @@ export async function handleSaveStudent() {
         }
 
         if (response.success) {
-            const modal = bootstrap.Modal.getInstance(document.getElementById('addStudentModal'));
-            modal.hide();
+            const modal = document.getElementById('addStudentModal');
+            modal.classList.remove('active');
             resetForm('addStudentForm');
             await loadStudents();
             showToast(currentStudentId ? 'Student updated successfully' : 'Student added successfully');
@@ -199,12 +199,15 @@ export async function editStudent(id) {
         form.section.value = student.section;
 
         // Update modal title and button
-        document.querySelector('#addStudentModal .modal-title').textContent = 'Edit Student';
-        document.getElementById('saveStudentBtn').textContent = 'Update Student';
+        const modalTitle = document.querySelector('#addStudentModal .modal-title');
+        const saveButton = document.getElementById('saveStudentBtn');
+        
+        if (modalTitle) modalTitle.textContent = 'Edit Student';
+        if (saveButton) saveButton.textContent = 'Update Student';
 
         // Show modal
-        const modal = new bootstrap.Modal(document.getElementById('addStudentModal'));
-        modal.show();
+        const modal = document.getElementById('addStudentModal');
+        modal.classList.add('active');
     } catch (error) {
         console.error('Error loading student data:', error);
         showToast('Error loading student data', 'error');
@@ -214,21 +217,19 @@ export async function editStudent(id) {
 // Delete student
 export function showDeleteConfirmation(id, name) {
     const confirmationHtml = `
-        <div class="modal fade" id="deleteConfirmationModal" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Delete Student</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p>Are you sure you want to delete <strong>${name}</strong>?</p>
-                        <p class="text-danger mb-0">This action cannot be undone.</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-danger" onclick="confirmDelete(${id})">Delete Student</button>
-                    </div>
+        <div class="modal" id="deleteConfirmationModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Delete Student</h5>
+                    <button type="button" class="btn btn-light" onclick="this.closest('.modal').remove()">×</button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete <strong>${name}</strong>?</p>
+                    <p class="text-danger">This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" onclick="this.closest('.modal').remove()">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmDelete(${id})">Delete Student</button>
                 </div>
             </div>
         </div>
@@ -244,16 +245,16 @@ export function showDeleteConfirmation(id, name) {
     document.body.insertAdjacentHTML('beforeend', confirmationHtml);
 
     // Show the modal
-    const modal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
-    modal.show();
+    const modal = document.getElementById('deleteConfirmationModal');
+    modal.classList.add('active');
 }
 
 export async function confirmDelete(id) {
     try {
         const response = await deleteStudent(id);
         if (response.success) {
-            const modal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmationModal'));
-            modal.hide();
+            const modal = document.getElementById('deleteConfirmationModal');
+            modal.remove();
             await loadStudents();
             showToast('Student deleted successfully');
         } else {
@@ -266,13 +267,58 @@ export async function confirmDelete(id) {
 
 // Reset form when modal is closed
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM Content Loaded');
+    
     const addStudentModal = document.getElementById('addStudentModal');
-    addStudentModal?.addEventListener('hidden.bs.modal', () => {
-        resetForm('addStudentForm');
-        currentStudentId = null;
-        document.querySelector('#addStudentModal .modal-title').textContent = 'Add New Student';
-        document.getElementById('saveStudentBtn').textContent = 'Save Student';
+    console.log('Add Student Modal:', addStudentModal);
+
+    // Add click event listener for Add New Student button
+    const addStudentBtn = document.getElementById('addStudentBtn');
+    console.log('Add Student Button:', addStudentBtn);
+    
+    if (addStudentBtn) {
+        addStudentBtn.addEventListener('click', () => {
+            console.log('Add Student button clicked');
+            addStudentModal.classList.add('active');
+            resetForm('addStudentForm');
+            currentStudentId = null;
+            const modalTitle = document.querySelector('#addStudentModal .modal-title');
+            const saveButton = document.getElementById('saveStudentBtn');
+            if (modalTitle) modalTitle.textContent = 'Add New Student';
+            if (saveButton) saveButton.textContent = 'Save Student';
+        });
+    }
+
+    // Add click event listener for modal backdrop
+    addStudentModal?.addEventListener('click', (e) => {
+        console.log('Modal clicked:', e.target);
+        if (e.target === addStudentModal) {
+            console.log('Backdrop clicked, closing modal');
+            closeModal(addStudentModal);
+        }
     });
+
+    // Add click event listener for cancel button
+    const cancelBtn = document.getElementById('cancelBtn');
+    console.log('Cancel Button:', cancelBtn);
+    
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => {
+            console.log('Cancel button clicked');
+            closeModal(addStudentModal);
+        });
+    }
+
+    // Add click event listener for close button
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    console.log('Close Button:', closeModalBtn);
+    
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', () => {
+            console.log('Close button clicked');
+            closeModal(addStudentModal);
+        });
+    }
 
     // Add filter event listeners
     document.getElementById('searchInput')?.addEventListener('input', filterStudents);
@@ -280,6 +326,17 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('yearFilter')?.addEventListener('change', filterStudents);
     document.getElementById('sectionFilter')?.addEventListener('change', filterStudents);
 });
+
+// Helper function to close modal and reset form
+function closeModal(modal) {
+    modal.classList.remove('active');
+    resetForm('addStudentForm');
+    currentStudentId = null;
+    const modalTitle = document.querySelector('#addStudentModal .modal-title');
+    const saveButton = document.getElementById('saveStudentBtn');
+    if (modalTitle) modalTitle.textContent = 'Add New Student';
+    if (saveButton) saveButton.textContent = 'Save Student';
+}
 
 // Make functions globally available
 window.editStudent = editStudent;

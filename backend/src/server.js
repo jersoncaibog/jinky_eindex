@@ -4,6 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const studentRoutes = require('./routes/studentRoutes');
 const recordRoutes = require('./routes/recordRoutes');
+const attendanceRoutes = require('./routes/attendance');
 
 const app = express();
 
@@ -14,7 +15,8 @@ app.use(express.urlencoded({ extended: true }));
 
 // API Routes
 app.use('/api/students', studentRoutes);
-app.use('/api/students', recordRoutes);
+app.use('/api/records', recordRoutes);
+app.use('/api/attendance', attendanceRoutes);
 
 // Static file serving
 app.use('/', express.static(path.join(__dirname, '../../')));

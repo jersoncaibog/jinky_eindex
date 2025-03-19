@@ -1,3 +1,4 @@
+import { icons } from './icons.js';
 import { handleSaveStudent, loadStudents } from './students.js';
 
 // Initialize Application
@@ -36,6 +37,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Load initial data
     loadStudents();
+
+    // Initialize icons
+    if (document.getElementById('searchIcon')) {
+        document.getElementById('searchIcon').innerHTML = icons.search;
+    }
+    if (document.getElementById('plusIcon')) {
+        document.getElementById('plusIcon').innerHTML = icons.plus;
+    }
+    if (document.getElementById('searchRfidIcon')) {
+        document.getElementById('searchRfidIcon').innerHTML = icons.search;
+    }
+    if (document.getElementById('arrowLeftIcon')) {
+        document.getElementById('arrowLeftIcon').innerHTML = icons.arrowLeft;
+    }
 });
 
 function filterStudents(searchTerm) {
@@ -59,7 +74,7 @@ async function handleRFIDScan() {
 
         if (data.success) {
             const student = data.student;
-            searchResult.classList.remove('d-none');
+            searchResult.classList.remove('hidden');
             searchResult.querySelector('.student-info').innerHTML = `
                 <p><strong>Name:</strong> ${student.name}</p>
                 <p><strong>Course:</strong> ${student.course}</p>
@@ -70,9 +85,9 @@ async function handleRFIDScan() {
             // Set student ID for view button
             const viewIndexBtn = document.getElementById('viewIndexBtn');
             viewIndexBtn.dataset.studentId = student.id;
-            viewIndexBtn.classList.remove('d-none');
+            viewIndexBtn.classList.remove('hidden');
         } else {
-            searchResult.classList.add('d-none');
+            searchResult.classList.add('hidden');
             showToast('Student not found', 'error');
         }
     } catch (error) {

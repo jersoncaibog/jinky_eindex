@@ -40,11 +40,22 @@ exports.getStudentById = async (req, res) => {
 
 exports.getStudentRecords = async (req, res) => {
     try {
-        const records = await Student.getRecords(req.params.id);
-        res.json({ success: true, records });
+        const studentId = req.params.id;
+        const category = req.query.category;
+        const subject = req.query.subject;
+        
+        const records = await Student.getRecords(studentId, category, subject);
+        
+        res.json({
+            success: true,
+            records: records
+        });
     } catch (error) {
-        console.error('Error in getStudentRecords:', error);
-        res.status(500).json({ success: false, message: 'Server error' });
+        console.error('Error getting student records:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to get student records'
+        });
     }
 };
 

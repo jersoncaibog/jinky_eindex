@@ -63,27 +63,180 @@ export async function deleteStudent(id) {
     }
 }
 
+// Academic Records API
+export async function addAcademicRecord(studentId, data) {
+    try {
+        data.record_type = 'academic';
+        
+        const response = await fetch(`${API_URL}/records/${studentId}/records`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        console.error('Error adding academic record:', error);
+        throw error;
+    }
+}
+
+export async function getAcademicRecord(recordId, studentId) {
+    try {
+        const response = await fetch(`${API_URL}/records/${studentId}/records/${recordId}`, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
+
+        const result = await response.json();
+        return result.success ? result.record : null;
+    } catch (error) {
+        console.error('Error getting academic record:', error);
+        throw error;
+    }
+}
+
+export async function updateAcademicRecord(recordId, data, studentId) {
+    try {
+        data.record_type = 'academic';
+        
+        const response = await fetch(`${API_URL}/records/${studentId}/records/${recordId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        console.error('Error updating academic record:', error);
+        throw error;
+    }
+}
+
+export async function deleteAcademicRecord(recordId, studentId) {
+    try {
+        const response = await fetch(`${API_URL}/records/${studentId}/records/${recordId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
+
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        console.error('Error deleting academic record:', error);
+        throw error;
+    }
+}
+
+// Attendance Records API
+export async function addAttendanceRecord(studentId, data) {
+    try {
+        // Use the attendance API
+        const response = await fetch(`${API_URL}/attendance`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                student_id: studentId,
+                subject_id: getSubjectIdFromCode(data.subject),
+                // No need to include record_type
+            })
+        });
+
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        console.error('Error adding attendance record:', error);
+        throw error;
+    }
+}
+
+// Helper function to get subject ID from subject code
+function getSubjectIdFromCode(subjectCode) {
+    // Based on the sample data, IT223 is ID 1 and IT221 is ID 2
+    if (subjectCode === 'IT223') return 1;
+    if (subjectCode === 'IT221') return 2;
+    return null;
+}
+
+export async function getAttendanceRecord(recordId, studentId) {
+    try {
+        // Note: There's no direct endpoint to get a single attendance record
+        // So we'll get all attendance for the student and find the specific one
+        const response = await fetch(`${API_URL}/attendance/students/${studentId}`, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
+
+        const result = await response.json();
+        if (!result.success) {
+            throw new Error(result.message || 'Failed to get attendance records');
+        }
+        
+        // Find the specific record by ID
+        const record = result.attendance.find(record => record.id === parseInt(recordId));
+        return record || null;
+    } catch (error) {
+        console.error('Error getting attendance record:', error);
+        throw error;
+    }
+}
+
+export async function deleteAttendanceRecord(recordId, studentId) {
+    try {
+        // Use the attendance API
+        const response = await fetch(`${API_URL}/attendance/${recordId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
+
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        console.error('Error deleting attendance record:', error);
+        throw error;
+    }
+}
+
 // Toast notifications
 export function showToast(message, type = 'success') {
     const toastContainer = document.getElementById('toastContainer');
     const toast = document.createElement('div');
-    toast.className = `toast align-items-center text-white bg-${type === 'error' ? 'danger' : 'success'} border-0`;
-    toast.setAttribute('role', 'alert');
-    toast.setAttribute('aria-live', 'assertive');
-    toast.setAttribute('aria-atomic', 'true');
+    toast.className = `toast toast-${type}`;
     
     toast.innerHTML = `
-        <div class="d-flex">
-            <div class="toast-body">${message}</div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        <div class="toast-content">
+            <div class="toast-message">${message}</div>
+            <button type="button" class="btn-toast" onclick="this.closest('.toast').remove()">×</button>
         </div>
     `;
     
     toastContainer.appendChild(toast);
-    const bsToast = new bootstrap.Toast(toast, { autohide: true, delay: 3000 });
-    bsToast.show();
     
-    toast.addEventListener('hidden.bs.toast', () => toast.remove());
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
 }
 
 // Form utilities
